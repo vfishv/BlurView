@@ -1,6 +1,8 @@
 package eightbitlab.com.blurview;
 
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+
 import androidx.annotation.NonNull;
 
 public interface BlurAlgorithm {
@@ -9,7 +11,7 @@ public interface BlurAlgorithm {
      * @param blurRadius blur radius
      * @return blurred bitmap
      */
-    Bitmap blur(Bitmap bitmap, float blurRadius);
+    Bitmap blur(@NonNull Bitmap bitmap, @NonNull float blurRadius);
 
     /**
      * Frees allocated resources
@@ -34,4 +36,8 @@ public interface BlurAlgorithm {
      */
     @NonNull
     Bitmap.Config getSupportedBitmapConfig();
+
+    float scaleFactor();
+
+    void render(@NonNull Canvas canvas, @NonNull Bitmap bitmap);
 }

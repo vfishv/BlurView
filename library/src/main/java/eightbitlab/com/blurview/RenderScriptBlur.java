@@ -1,20 +1,30 @@
 package eightbitlab.com.blurview;
 
+import static eightbitlab.com.blurview.BlurController.DEFAULT_SCALE_FACTOR;
+
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.os.Build;
 import android.renderscript.Allocation;
 import android.renderscript.Element;
 import android.renderscript.RenderScript;
 import android.renderscript.ScriptIntrinsicBlur;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
 /**
- * Blur using RenderScript, processed on GPU.
+ * Blur using RenderScript, processed on GPU when device drivers support it.
  * Requires API 17+
+ *
+ * @deprecated because RenderScript is deprecated and its hardware acceleration is not guaranteed.
+ * RenderEffectBlur is the best alternative at the moment.
  */
-public final class RenderScriptBlur implements BlurAlgorithm {
+@Deprecated
+public class RenderScriptBlur implements BlurAlgorithm {
+    private final Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
     private final RenderScript renderScript;
     private final ScriptIntrinsicBlur blurScript;
     private Allocation outAllocation;
@@ -26,12 +36,12 @@ public final class RenderScriptBlur implements BlurAlgorithm {
      * @param context Context to create the {@link RenderScript}
      */
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
-    public RenderScriptBlur(Context context) {
+    public RenderScriptBlur(@NonNull Context context) {
         renderScript = RenderScript.create(context);
         blurScript = ScriptIntrinsicBlur.create(renderScript, Element.U8_4(renderScript));
     }
 
-    private boolean canReuseAllocation(Bitmap bitmap) {
+    private boolean canReuseAllocation(@NonNull Bitmap bitmap) {
         return bitmap.getHeight() == lastBitmapHeight && bitmap.getWidth() == lastBitmapWidth;
     }
 
@@ -42,7 +52,7 @@ public final class RenderScriptBlur implements BlurAlgorithm {
      */
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
-    public final Bitmap blur(Bitmap bitmap, float blurRadius) {
+    public Bitmap blur(@NonNull Bitmap bitmap, float blurRadius) {
         //Allocation will use the same backing array of pixels as bitmap if created with USAGE_SHARED flag
         Allocation inAllocation = Allocation.createFromBitmap(renderScript, bitmap);
 
@@ -83,5 +93,15 @@ public final class RenderScriptBlur implements BlurAlgorithm {
     @Override
     public Bitmap.Config getSupportedBitmapConfig() {
         return Bitmap.Config.ARGB_8888;
+    }
+
+    @Override
+    public float scaleFactor() {
+        return DEFAULT_SCALE_FACTOR;
+    }
+
+    @Override
+    public void render(@NonNull Canvas canvas, @NonNull Bitmap bitmap) {
+        canvas.drawBitmap(bitmap, 0f, 0f, paint);
     }
 }

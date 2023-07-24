@@ -1,45 +1,64 @@
 package com.eightbitlab.blurview_sample;
 
+import android.graphics.Outline;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
-import com.google.android.material.tabs.TabLayout;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewOutlineProvider;
+import android.widget.SeekBar;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
-import androidx.appcompat.app.AppCompatActivity;
-import android.view.ViewGroup;
-import android.widget.SeekBar;
 
-import com.eightbitlab.supportrenderscriptblur.SupportRenderScriptBlur;
+import com.google.android.material.tabs.TabLayout;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
+import eightbitlab.com.blurview.BlurAlgorithm;
 import eightbitlab.com.blurview.BlurView;
+import eightbitlab.com.blurview.RenderEffectBlur;
+import eightbitlab.com.blurview.RenderScriptBlur;
 
 public class MainActivity extends AppCompatActivity {
 
-    @BindView(R.id.viewPager)
-    ViewPager viewPager;
-    @BindView(R.id.tabLayout)
-    TabLayout tabLayout;
-    @BindView(R.id.bottomBlurView)
-    BlurView bottomBlurView;
-    @BindView(R.id.topBlurView)
-    BlurView topBlurView;
-    @BindView(R.id.radiusSeekBar)
-    SeekBar radiusSeekBar;
-    @BindView(R.id.root)
-    ViewGroup root;
+    private ViewPager viewPager;
+    private TabLayout tabLayout;
+    private BlurView bottomBlurView;
+    private BlurView topBlurView;
+    private SeekBar radiusSeekBar;
+    private ViewGroup root;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
-
+        initView();
         setupBlurView();
         setupViewPager();
+    }
+
+    private void initView() {
+        viewPager = findViewById(R.id.viewPager);
+        tabLayout = findViewById(R.id.tabLayout);
+        bottomBlurView = findViewById(R.id.bottomBlurView);
+        topBlurView = findViewById(R.id.topBlurView);
+        // Rounded corners + casting elevation shadow with transparent background
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            topBlurView.setClipToOutline(true);
+            topBlurView.setOutlineProvider(new ViewOutlineProvider() {
+                @Override
+                public void getOutline(View view, Outline outline) {
+                    topBlurView.getBackground().getOutline(outline);
+                    outline.setAlpha(1f);
+                }
+            });
+        }
+        radiusSeekBar = findViewById(R.id.radiusSeekBar);
+        root = findViewById(R.id.root);
     }
 
     private void setupViewPager() {
@@ -50,23 +69,20 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupBlurView() {
         final float radius = 25f;
-        final float minBlurRadius = 10f;
+        final float minBlurRadius = 4f;
         final float step = 4f;
 
         //set background, if your root layout doesn't have one
         final Drawable windowBackground = getWindow().getDecorView().getBackground();
+        BlurAlgorithm algorithm = getBlurAlgorithm();
 
-        topBlurView.setupWith(root)
+        topBlurView.setupWith(root, algorithm)
                 .setFrameClearDrawable(windowBackground)
-                .setBlurAlgorithm(new SupportRenderScriptBlur(this))
-                .setBlurRadius(radius)
-                .setHasFixedTransformationMatrix(true);
+                .setBlurRadius(radius);
 
-        bottomBlurView.setupWith(root)
+        bottomBlurView.setupWith(root, new RenderScriptBlur(this))
                 .setFrameClearDrawable(windowBackground)
-                .setBlurAlgorithm(new SupportRenderScriptBlur(this))
-                .setBlurRadius(radius)
-                .setHasFixedTransformationMatrix(true);
+                .setBlurRadius(radius);
 
         int initialProgress = (int) (radius * step);
         radiusSeekBar.setProgress(initialProgress);
@@ -80,6 +96,17 @@ public class MainActivity extends AppCompatActivity {
                 bottomBlurView.setBlurRadius(blurRadius);
             }
         });
+    }
+
+    @NonNull
+    private BlurAlgorithm getBlurAlgorithm() {
+        BlurAlgorithm algorithm;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            algorithm = new RenderEffectBlur();
+        } else {
+            algorithm = new RenderScriptBlur(this);
+        }
+        return algorithm;
     }
 
     static class ViewPagerAdapter extends FragmentPagerAdapter {
