@@ -1,12 +1,12 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 34
+    compileSdkVersion 36
     namespace 'com.eightbitlab.blurview_sample'
     defaultConfig {
         applicationId "com.eightbitlab.blurview_sample"
         minSdkVersion 19
-        targetSdkVersion 34
+        targetSdkVersion 36
         versionCode 3
         versionName "1.1"
     }
