@@ -2,7 +2,7 @@ apply plugin: 'com.android.library'
 //apply plugin: 'de.mannodermaus.android-junit5'
 
 android {
-    compileSdkVersion 34
+    compileSdkVersion 36
 
     namespace 'eightbitlab.com.blurview'
 
@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         minSdkVersion 18
-        //targetSdkVersion 34
+        //targetSdkVersion 36
     }
 }
 
